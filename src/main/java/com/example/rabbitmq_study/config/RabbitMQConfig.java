@@ -23,29 +23,29 @@ public class RabbitMQConfig {
 
     //创建业务队列交换机
     public static final String BUSINESS_EXCHANGE_NAME = "dead.letter.demo.simple.business.exchange";
+    //创建延迟队列交换机
+    public static final String DEALY_EXCHANGE = "dead.letter.demo.simple.delay.business.exchange";
+    // 创建死信队列交换机
+    public static final String DEAD_LETTER_EXCHANGE = "dead.letter.demo.simple.deadletter.exchange";
     //创建业务队列A
     public static final String BUSINESS_QUEUEA_NAME = "dead.letter.demo.simple.business.queuea";
     //创建业务队列B
     public static final String BUSINESS_QUEUEB_NAME = "dead.letter.demo.simple.business.queueb";
-    // 创建死信队列交换机
-    public static final String DEAD_LETTER_EXCHANGE = "dead.letter.demo.simple.deadletter.exchange";
+    //创建业务队列C
+    public static final String DELAY_QUEUEB_NAME = "dead.letter.demo.simple.delay.business.queuec";
     // 创建死信队列路由A key
     public static final String DEAD_LETTER_QUEUEA_ROUTING_KEY = "dead.letter.demo.simple.deadletter.queuea.routingkey";
     // 创建死信队列路由B key
     public static final String DEAD_LETTER_QUEUEB_ROUTING_KEY = "dead.letter.demo.simple.deadletter.queueb.routingkey";
+    // 创建死信延迟队列路由B key
+    public static final String DEAD_LETTER_DELAY_QUEUEB_ROUTING_KEY = "dead.letter.demo.simple.deadletter.queuec.routingkey";
     // 创建死信队列A
     public static final String DEAD_LETTER_QUEUEA_NAME = "dead.letter.demo.simple.deadletter.queuea";
     // 创建死信队列B
     public static final String DEAD_LETTER_QUEUEB_NAME = "dead.letter.demo.simple.deadletter.queueb";
+    // 创建死信延迟队列B
+    public static final String DEAD_LETTER_DELAY_QUEUEB_NAME = "dead.letter.demo.simple.delay.deadletter.queuec";
 
-    @Bean
-    @Scope("prototype")
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
-        RabbitTemplate template = new RabbitTemplate(connectionFactory);
-        template.setMandatory(true);
-        template.setMessageConverter(new SerializerMessageConverter());
-        return template;
-    }
 
     // 声明业务 广播模式 Exchange
     @Bean("businessExchange")
@@ -53,10 +53,30 @@ public class RabbitMQConfig {
         return new FanoutExchange(BUSINESS_EXCHANGE_NAME);
     }
 
+    // 声明业务 广播模式 Exchange
+    @Bean("delayExchange")
+    public DirectExchange DelayExchange(){
+        return new DirectExchange(DEALY_EXCHANGE);
+    }
+
     // 声明死信 单波博士 Exchange
     @Bean("deadLetterExchange")
     public DirectExchange deadLetterExchange(){
         return new DirectExchange(DEAD_LETTER_EXCHANGE);
+    }
+
+
+    // 声明延迟队列C 并绑定死信队列 exchange 和exchange key C
+    @Bean("businessQueueC")
+    public Queue businessQueueC(){
+        Map<String, Object> args = new HashMap<>(2);
+//       x-dead-letter-exchange    这里声明当前队列绑定的死信交换机
+        args.put("x-dead-letter-exchange", DEAD_LETTER_EXCHANGE);
+//       x-dead-letter-routing-key  这里声明当前队列的死信路由key
+        args.put("x-dead-letter-routing-key", DEAD_LETTER_DELAY_QUEUEB_ROUTING_KEY);
+        // x-message-ttl  声明队列的TTL
+        args.put("x-message-ttl", 60000);
+        return QueueBuilder.durable(DELAY_QUEUEB_NAME).withArguments(args).build();
     }
 
     // 声明业务队列A 并绑定死信队列 exchange 和exchange key A
@@ -92,6 +112,11 @@ public class RabbitMQConfig {
     public Queue deadLetterQueueB(){
         return new Queue(DEAD_LETTER_QUEUEB_NAME);
     }
+    // 声明延迟死信队列C
+    @Bean("deadLetterQueueC")
+    public Queue DealyQueueC(){
+        return new Queue(DEAD_LETTER_DELAY_QUEUEB_NAME);
+    }
 
     // 声明业务队列A 与业务路由绑定关系
     @Bean
@@ -107,6 +132,13 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(queue).to(exchange);
     }
 
+    // 声明延迟队列C与延迟交换机路由绑定关系
+    @Bean
+    public Binding businessBindingC(@Qualifier("businessQueueC") Queue queue,
+                                    @Qualifier("delayExchange") DirectExchange exchange){
+        return BindingBuilder.bind(queue).to(exchange).with("delay");
+    }
+
     // 声明死信队列A绑定关系
     @Bean
     public Binding deadLetterBindingA(@Qualifier("deadLetterQueueA") Queue queue,
@@ -119,5 +151,11 @@ public class RabbitMQConfig {
     public Binding deadLetterBindingB(@Qualifier("deadLetterQueueB") Queue queue,
                                       @Qualifier("deadLetterExchange") DirectExchange exchange){
         return BindingBuilder.bind(queue).to(exchange).with(DEAD_LETTER_QUEUEB_ROUTING_KEY);
+    }
+    // 声明延迟死信队列C 与死信路由绑定关系
+    @Bean
+    public Binding deadLetterBindingC(@Qualifier("deadLetterQueueC") Queue queue,
+                                      @Qualifier("deadLetterExchange") DirectExchange exchange){
+        return BindingBuilder.bind(queue).to(exchange).with(DEAD_LETTER_DELAY_QUEUEB_ROUTING_KEY);
     }
 }

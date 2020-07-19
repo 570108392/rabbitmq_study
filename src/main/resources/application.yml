@@ -8,8 +8,6 @@ spring:
       simple:
         default-requeue-rejected: false
         acknowledge-mode: manual
-      direct:
-        missing-queues-fatal: true
     port: 8085
     publisher-returns: true #表示开启生产者确认模式
     publisher-confirm-type: correlated

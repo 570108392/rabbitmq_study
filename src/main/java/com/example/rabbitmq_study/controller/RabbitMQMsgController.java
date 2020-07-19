@@ -16,4 +16,13 @@ public class RabbitMQMsgController {
     public void sendMsg(String msg){
         sender.sendMsg(msg);
     }
+
+    /**
+     * 模拟延迟队列消息
+     * @param msg
+     */
+    @RequestMapping("delaymsg")
+    public void delaymsg(String msg){
+        sender.sendDelayMsg(msg);
+    }
 }

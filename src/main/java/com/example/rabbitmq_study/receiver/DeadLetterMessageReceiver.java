@@ -24,4 +24,9 @@ public class DeadLetterMessageReceiver {
         System.out.println("收到死信消息B：" + new String(message.getBody()));
         channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
     }
+    @RabbitListener(queues = DEAD_LETTER_DELAY_QUEUEB_NAME)
+    public void receiveC(Message message, Channel channel) throws IOException {
+        System.out.println("收到死信延迟队列消息C：" + new String(message.getBody()));
+        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+    }
 }
