@@ -21,6 +21,8 @@ import java.util.Map;
 public class RabbitMQConfig {
 
 
+    //创建自定义延迟时间交换机
+    public static final String CUSTOM_EXCHANGE = "custom.exchange";
     //创建业务队列交换机
     public static final String BUSINESS_EXCHANGE_NAME = "dead.letter.demo.simple.business.exchange";
     //创建延迟队列交换机
@@ -33,12 +35,16 @@ public class RabbitMQConfig {
     public static final String BUSINESS_QUEUEB_NAME = "dead.letter.demo.simple.business.queueb";
     //创建业务队列C
     public static final String DELAY_QUEUEB_NAME = "dead.letter.demo.simple.delay.business.queuec";
+    //创建自定义延迟时间队列
+    public static final String CUSTOM_QUEUEB_NAME = "custom.queuec";
     // 创建死信队列路由A key
     public static final String DEAD_LETTER_QUEUEA_ROUTING_KEY = "dead.letter.demo.simple.deadletter.queuea.routingkey";
     // 创建死信队列路由B key
     public static final String DEAD_LETTER_QUEUEB_ROUTING_KEY = "dead.letter.demo.simple.deadletter.queueb.routingkey";
     // 创建死信延迟队列路由B key
     public static final String DEAD_LETTER_DELAY_QUEUEB_ROUTING_KEY = "dead.letter.demo.simple.deadletter.queuec.routingkey";
+    // 创建自定义延迟时间路由
+    public static final String CUSTOM_QUEUEB_ROUTING_KEY = "custom.queue.routingkey";
     // 创建死信队列A
     public static final String DEAD_LETTER_QUEUEA_NAME = "dead.letter.demo.simple.deadletter.queuea";
     // 创建死信队列B
@@ -46,6 +52,24 @@ public class RabbitMQConfig {
     // 创建死信延迟队列B
     public static final String DEAD_LETTER_DELAY_QUEUEB_NAME = "dead.letter.demo.simple.delay.deadletter.queuec";
 
+
+    @Bean("immediateQueue")
+    public Queue immediateQueue() {
+        return new Queue(CUSTOM_QUEUEB_NAME);
+    }
+
+    @Bean("customExchange")
+    public CustomExchange customExchange() {
+        Map<String, Object> args = new HashMap<>();
+        args.put("x-delayed-type", "direct");
+        return new CustomExchange(CUSTOM_EXCHANGE, "x-delayed-message", true, false, args);
+    }
+
+    @Bean
+    public Binding bindingNotify(@Qualifier("immediateQueue") Queue queue,
+                                 @Qualifier("customExchange") CustomExchange customExchange) {
+        return BindingBuilder.bind(queue).to(customExchange).with(CUSTOM_QUEUEB_ROUTING_KEY).noargs();
+    }
 
     // 声明业务 广播模式 Exchange
     @Bean("businessExchange")

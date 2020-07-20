@@ -40,6 +40,18 @@ public class BusinessMessageSender{
         rabbitTemplate.convertAndSend(BUSINESS_EXCHANGE_NAME, "key", msg,correlationData);
     }
 
+    /**
+     * 自定义延迟时间消息发送者
+     * @param msg
+     * @param delayTime
+     */
+    public void sendDelayMsg(String msg, Integer delayTime) {
+        rabbitTemplate.convertAndSend(CUSTOM_EXCHANGE, CUSTOM_QUEUEB_ROUTING_KEY, msg, a ->{
+            a.getMessageProperties().setDelay(delayTime);
+            return a;
+        });
+    }
+
     public void sendDelayMsg(String msg){
         rabbitTemplate.convertAndSend(DEALY_EXCHANGE, "delay", msg);
     }

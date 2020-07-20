@@ -7,6 +7,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Date;
 
 import static com.example.rabbitmq_study.config.RabbitMQConfig.*;
 
@@ -39,6 +40,19 @@ public class BusinessMessageReceiver {
     @RabbitListener(queues = BUSINESS_QUEUEB_NAME)
     public void receiveB(Message message, Channel channel) throws IOException {
         System.out.println("收到业务消息B：" + new String(message.getBody()));
+        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+    }
+
+    /**
+     * 自定义消息延迟时间消费者业务逻辑
+     * @param message
+     * @param channel
+     * @throws IOException
+     */
+    @RabbitListener(queues = CUSTOM_QUEUEB_NAME)
+    public void receiveD(Message message, Channel channel) throws IOException {
+        String msg = new String(message.getBody());
+        log.info("当前时间：{},延时队列收到消息：{}", new Date().toString(), msg);
         channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
     }
 }
